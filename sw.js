@@ -1,5 +1,10 @@
-const CACHE = 'box00-v15';
-const FILES = ['./box00-orcamento-v15.html'];
+const CACHE = 'box00-v16';
+const FILES = [
+  './index.html',
+  './box00-orcamento-v16.html',
+  './manifest.json',
+  './icon.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
