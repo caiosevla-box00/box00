@@ -1378,16 +1378,7 @@ function formatarDataBR(str) {
   return s;
 }
 
-// Token gate — fecha brecha da URL direta
-(function() {
-  try {
-    const s = JSON.parse(localStorage.getItem('box00_auth_v1') || 'null');
-    const EXPIRY = 7 * 24 * 60 * 60 * 1000;
-    if (!s || !s.ok || Date.now() - s.ts > EXPIRY) {
-      window.location.replace('index.html');
-    }
-  } catch(e) { window.location.replace('index.html'); }
-})();
+// Token gate removido daqui — está no final do body
 
 function tempoTotal() {
   let mins_min = 0, mins_max = 0;
@@ -4220,5 +4211,21 @@ if(salvoEm) {
     </button>
   </div>
 </div>
+<script>
+// Token gate — verifica autenticação após carregar tudo
+(function() {
+  try {
+    const s = JSON.parse(localStorage.getItem('box00_auth_v1') || 'null');
+    const EXPIRY = 7 * 24 * 60 * 60 * 1000;
+    if (!s || !s.ok || (Date.now() - s.ts) > EXPIRY) {
+      const base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+      window.location.replace(base + 'index.html');
+    }
+  } catch(e) {
+    const base = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    window.location.replace(base + 'index.html');
+  }
+})();
+</script>
 </body>
 </html>
