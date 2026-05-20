@@ -3320,24 +3320,6 @@ async function confirmarAgendamento() {
     criadoEm:        hoje()
   };
 
-  // Salva local
-  const lista = getAgendamentos();
-  lista.push(ag);
-  salvarAgendamentos(lista);
-
-  // Envia para Google Calendar via Apps Script
-  mostrarToast('📅 Criando evento no Google Agenda...');
-  const r = await apiCall('criarEvento', {
-    evento: {
-      titulo:    `BOX 0.0 · ${primeiroNome(c?.nome)} · ${s?.nome}`,
-      data,
-      hora,
-      duracaoMin: durMin,
-      emailCliente: c?.email || '',
-      descricao: `Cliente: ${c?.nome}\nVeículo: ${c?.marca||''} ${c?.modelo||''} ${c?.ano||''}\nServiço: ${s?.nome}\n${obs ? 'Obs: ' + obs : ''}`
-    }
-  });
-
   // Salva local e no Sheets
   const lista = getAgendamentos();
   lista.push(ag);
