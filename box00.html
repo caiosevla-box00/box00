@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BOX 0.0</title>
+<title>BOX 0.0 — v15</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BOX 0.0">
@@ -1160,11 +1160,6 @@ input[type=range]::-webkit-slider-thumb {
     </div>
     <button onclick="renderFinanceiro()" style="width:100%;background:var(--verde);color:var(--preto);border:none;border-radius:6px;padding:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;">FILTRAR</button>
   </div>
-
-  <!-- BOTÃO SYNC -->
-  <button onclick="sincFinanceiro()" style="width:100%;background:transparent;border:1px solid var(--borda);color:var(--dim);border-radius:8px;padding:9px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:14px;">
-    ☁️ SINCRONIZAR DA NUVEM
-  </button>
 
   <!-- CARDS PRINCIPAIS -->
   <div id="fin-cards"></div>
@@ -3635,15 +3630,17 @@ function setFinPeriodo(p) {
 }
 
 async function sincFinanceiro() {
-  mostrarToast('☁️ Sincronizando financeiro...');
+  const elTs = document.getElementById('fin-sync-ts');
+  if (elTs) elTs.textContent = '⏳ Sincronizando...';
+
   const ping = await apiCall('ping');
   if (!ping.ok) {
-    mostrarToast('⚠️ Offline — mostrando dados locais');
+    if (elTs) elTs.textContent = '⚠️ Offline — dados locais';
     renderFinanceiro();
     return;
   }
 
-  // Busca todos os atendimentos do Sheets (todos clientes)
+  // Busca atendimentos — fonte única de verdade
   const rAt = await apiCall('getAtendimentos', {});
   if (rAt.ok && rAt.data) {
     const clientes = getClientes();
@@ -3652,41 +3649,47 @@ async function sincFinanceiro() {
         const c = clientes.find(x => x.id === a.clienteId);
         a.nomeCliente = c?.nome || '';
       }
-      // Normaliza campos críticos — remove espaços do Sheets
-      a.semana = String(a.semana||'').trim();
-      a.mes    = String(a.mes||'').trim();
-      a.ano    = String(a.ano||'').trim();
-      a.data   = formatarDataBR(String(a.data||'').trim());
-      // Normaliza valores monetários
-      a.valorLiquido = String(a.valorLiquido||'').replace('R$','').replace(/\s/g,'').trim();
-      a.valorCobrado = String(a.valorCobrado||'').replace('R$','').replace(/\s/g,'').trim();
-      a.custoTaxa    = String(a.custoTaxa||'').replace('R$','').replace(/\s/g,'').trim();
-      a.valor        = String(a.valor||'').replace('R$','').replace(/\s/g,'').trim();
+      // Normaliza strings do Sheets
+      a.semana       = String(a.semana      ||'').trim();
+      a.mes          = String(a.mes         ||'').trim();
+      a.ano          = String(a.ano         ||'').trim();
+      a.data         = formatarDataBR(String(a.data||'').trim());
+      a.valor        = String(a.valor       ||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
+      a.valorLiquido = String(a.valorLiquido||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
+      a.valorCobrado = String(a.valorCobrado||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
+      a.custoTaxa    = String(a.custoTaxa   ||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
+      // Calcula semana/mes se vieram vazios
+      if (!a.semana || !a.mes) {
+        const d = dataStrParaDate(a.data);
+        if (d) {
+          if (!a.semana) a.semana = getISOWeek(d);
+          if (!a.mes)    a.mes    = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+          if (!a.ano)    a.ano    = String(d.getFullYear());
+        }
+      }
       return a;
     });
-    localStorage.setItem('box00_fin_atendimentos_v1', JSON.stringify(atendimentos));
+    localStorage.setItem('box00_fin_cache', JSON.stringify(atendimentos));
   }
 
-  // Busca saídas do Sheets
+  // Busca saídas
   const rSaidas = await apiCall('getSaidas');
   if (rSaidas.ok && rSaidas.data) {
-    // Normaliza vírgula decimal para ponto
     const saidas = rSaidas.data.map(s => ({
       ...s,
-      valor: parseFloat(String(s.valor).replace(',', '.')) || 0
+      valor: parseFloat(String(s.valor||'').replace('R$','').replace(/\s/g,'').replace(',','.')) || 0
     }));
     salvarSaidasLocal(saidas);
   }
 
+  const ts = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  if (elTs) elTs.textContent = 'Sync: ' + ts;
   renderFinanceiro();
-  const ts = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-  const el = document.getElementById('fin-sync-ts');
-  if (el) el.textContent = 'Última sincronização: ' + ts;
   mostrarToast('✅ Financeiro atualizado!');
 }
 
 function getAtendimentosFin() {
-  try { return JSON.parse(localStorage.getItem('box00_fin_atendimentos_v1') || '[]'); } catch(e) { return []; }
+  try { return JSON.parse(localStorage.getItem('box00_fin_cache') || '[]'); } catch(e) { return []; }
 }
 
 function renderFinanceiro() {
