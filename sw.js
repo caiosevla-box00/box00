@@ -1,10 +1,5 @@
-const CACHE = 'box00-v16';
-const FILES = [
-  './index.html',
-  './box00-orcamento-v16.html',
-  './manifest.json',
-  './icon.png'
-];
+const CACHE = 'box00-v17';
+const FILES = ['./index.html', './box00.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -21,8 +16,5 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Sempre tenta rede primeiro — se falhar usa cache
-  e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
-  );
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
