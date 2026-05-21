@@ -3649,24 +3649,39 @@ async function sincFinanceiro() {
         const c = clientes.find(x => x.id === a.clienteId);
         a.nomeCliente = c?.nome || '';
       }
-      // Normaliza strings do Sheets
-      a.semana       = String(a.semana      ||'').trim();
-      a.mes          = String(a.mes         ||'').trim();
-      a.ano          = String(a.ano         ||'').trim();
-      a.data         = formatarDataBR(String(a.data||'').trim());
+      // Converte qualquer formato de data para objeto Date
+      function toDate(str) {
+        if (!str) return null;
+        const s = String(str).trim();
+        if (!s) return null;
+        const dt = new Date(s);
+        return isNaN(dt.getTime()) ? dataStrParaDate(s) : dt;
+      }
+
+      // Normaliza data para dd/mm/aaaa
+      const dtData = toDate(a.data);
+      if (dtData) {
+        a.data = String(dtData.getDate()).padStart(2,'0') + '/' +
+                 String(dtData.getMonth()+1).padStart(2,'0') + '/' +
+                 dtData.getFullYear();
+      }
+
+      // Normaliza semana — recalcula sempre a partir da data real
+      if (dtData) {
+        a.semana = getISOWeek(dtData);
+        a.mes    = dtData.getFullYear() + '-' + String(dtData.getMonth()+1).padStart(2,'0');
+        a.ano    = String(dtData.getFullYear());
+      } else {
+        a.semana = String(a.semana||'').trim();
+        a.mes    = String(a.mes||'').trim();
+        a.ano    = String(a.ano||'').trim();
+      }
+
+      // Normaliza valores monetários
       a.valor        = String(a.valor       ||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
       a.valorLiquido = String(a.valorLiquido||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
       a.valorCobrado = String(a.valorCobrado||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
       a.custoTaxa    = String(a.custoTaxa   ||'').replace('R$','').replace(/\s/g,'').replace(',','.').trim();
-      // Calcula semana/mes se vieram vazios
-      if (!a.semana || !a.mes) {
-        const d = dataStrParaDate(a.data);
-        if (d) {
-          if (!a.semana) a.semana = getISOWeek(d);
-          if (!a.mes)    a.mes    = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-          if (!a.ano)    a.ano    = String(d.getFullYear());
-        }
-      }
       return a;
     });
     localStorage.setItem('box00_fin_cache', JSON.stringify(atendimentos));

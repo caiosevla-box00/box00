@@ -1,4 +1,4 @@
-const CACHE = 'box00-v18';
+const CACHE = 'box00-v19';
 const FILES = ['./index.html', './box00.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', e => {
