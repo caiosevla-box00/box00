@@ -2433,7 +2433,8 @@ function salvarAtendimento() {
   const servicos  = document.getElementById('at-servicos').value.trim();
   const valor     = parseFloat(document.getElementById('at-valor').value) || 0;
   const obs       = document.getElementById('at-obs').value.trim();
-  const fech      = window._atendFechamento || null;
+  const fechDados = window._atendFechamento || null;
+  window._atendFechamento = null;
 
   if (!servicos) { mostrarToast('⚠️ Informe os serviços'); return; }
 
@@ -2441,64 +2442,22 @@ function salvarAtendimento() {
   const idx   = lista.findIndex(x => x.id === clienteId);
   if (idx < 0) return;
 
-  const dataFmt   = formatarDataBR(data ? new Date(data + 'T12:00:00').toLocaleDateString('pt-BR') : hoje());
-  const dtObj2    = dataStrParaDate(dataFmt) || new Date();
-  const semanaAt2 = getISOWeek(dtObj2);
-  const mesAt2    = dtObj2.getFullYear() + '-' + String(dtObj2.getMonth()+1).padStart(2,'0');
-  const anoAt2    = String(dtObj2.getFullYear());
-
-  const atendimento = {
-    id:             gerarId(),
-    clienteId,
-    data:           dataFmt,
-    semana:         semanaAt2,
-    mes:            mesAt2,
-    ano:            anoAt2,
-    servicos,
-    valor,
-    obs,
-    formaPagamento: fech?.formaPagamento  || 'pix',
-    parcelas:       fech?.parcelas        || 1,
-    taxaPct:        fech?.taxaPct         || 0,
-    valorCobrado:   fech?.valorCobrado    || valor,
-    custoTaxa:      fech?.custoTaxa       || 0,
-    valorLiquido:   fech?.liquido         || valor,
-    divContas:      fech?.divisao?.contas    || 0,
-    divMaquinas:    fech?.divisao?.maquinas  || 0,
-    divEstoque:     fech?.divisao?.estoque   || 0,
-    divLucro:       fech?.divisao?.lucro     || 0,
-    criadoEm:       hoje()
-  };
-
-  lista[idx].atendimentos = lista[idx].atendimentos || [];
-  lista[idx].atendimentos.push(atendimento);
-
-  salvarClientes(lista);
-  const fechDados = window._atendFechamento;
-  window._atendFechamento = null;
   document.getElementById('modal-atend').style.display = 'none';
-
   if (document.getElementById('modal-perfil').style.display !== 'none') {
     abrirPerfil(clienteId);
   }
   renderClientes();
 
-  // Envia para Google Sheets
-  const atBR = Object.assign({}, atendimento);
-  ['valor','valorCobrado','custoTaxa','valorLiquido','divContas','divMaquinas','divEstoque','divLucro','taxaPct'].forEach(function(k) { if (atBR[k] !== undefined) atBR[k] = numBR(atBR[k]); });
-  apiCall('salvarAtendimento', { atendimento: atBR }).then(r => {
-    mostrarToast(r.ok ? '✅ Registrado!' : '💾 Salvo local');
-  });
-
-  // Se veio do checkout, abre modal de agendamento automaticamente
+  // Se veio do checkout, abre agendamento com fechamento completo
+  // O atendimento será registrado UMA VEZ no COBRAR
   if (fechDados) {
-    const c = lista[idx];
-    const svcsTexto = atendimento.servicos;
-    // Detecta o svcId pelo nome do serviço
-    const svcMatch = SERVICOS.find(s => svcsTexto.includes(s.nome));
+    const svcMatch = SERVICOS.find(s => servicos.includes(s.nome));
     setTimeout(() => {
-      abrirModalAgendamentoPos(clienteId, svcsTexto, svcMatch?.id || '', fechDados?.valorOriginal || 0);
+      abrirModalAgendamentoPos(clienteId, servicos, svcMatch?.id || '', fechDados?.valorOriginal || valor, fechDados);
     }, 400);
+    mostrarToast('✅ Escolha data e horário!');
+  } else {
+    mostrarToast('✅ Cliente selecionado!');
   }
 }
 
