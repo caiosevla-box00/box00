@@ -408,9 +408,86 @@ input[type=range]::-webkit-slider-thumb {
 .section.active .combo-item {
   animation: fadeUp .25s ease both;
 }
+
+/* ===== LOADING OVERLAY ===== */
+#box-loading {
+  position:fixed; inset:0; z-index:99999;
+  background:#080808;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  transition:opacity .5s ease;
+  padding:32px;
+}
+#box-loading.fade-out { opacity:0; pointer-events:none; }
+#box-loading.hidden   { display:none; }
+
+.loading-logo {
+  width:140px; height:140px; border-radius:50%;
+  box-shadow:0 0 40px rgba(170,255,0,.25);
+  animation:loadPulse 2s ease-in-out infinite;
+  margin-bottom:28px;
+}
+@keyframes loadPulse {
+  0%,100%{ transform:scale(1);   filter:drop-shadow(0 0 10px rgba(170,255,0,.3)); }
+  50%    { transform:scale(1.05);filter:drop-shadow(0 0 24px rgba(170,255,0,.6)); }
+}
+.loading-brand {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:38px; letter-spacing:6px; color:#fff; margin-bottom:4px;
+}
+.loading-sub {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; letter-spacing:4px; color:#5abf00;
+  text-transform:uppercase; margin-bottom:36px;
+}
+.loading-step {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:13px; letter-spacing:2px; color:#aaa;
+  text-transform:uppercase; margin-bottom:14px;
+  min-height:18px; text-align:center;
+}
+.loading-bar-wrap {
+  width:260px; max-width:80vw;
+  background:#1a1a1a; border-radius:8px;
+  height:6px; overflow:hidden; margin-bottom:12px;
+}
+.loading-bar {
+  height:100%; border-radius:8px;
+  background:linear-gradient(90deg,#5abf00,#AAFF00);
+  width:0%; transition:width .4s ease;
+}
+.loading-pct {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px; color:#5abf00; letter-spacing:2px;
+}
+#bg-sync {
+  position:fixed; bottom:72px; right:14px;
+  background:#1a2600; border:1px solid rgba(170,255,0,.3);
+  border-radius:20px; padding:5px 10px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; color:#5abf00; letter-spacing:1px;
+  z-index:500; opacity:0; transition:opacity .3s;
+  pointer-events:none;
+}
+#bg-sync.show { opacity:1; }
 </style>
 </head>
 <body>
+
+<!-- LOADING OVERLAY -->
+<div id="box-loading">
+  <img src="icon.png" class="loading-logo" alt="BOX 0.0">
+  <div class="loading-brand">BOX <span style="color:#AAFF00">0.0</span></div>
+  <div class="loading-sub">Estética Automotiva</div>
+  <div class="loading-step" id="loading-step">Iniciando...</div>
+  <div class="loading-bar-wrap">
+    <div class="loading-bar" id="loading-bar"></div>
+  </div>
+  <div class="loading-pct" id="loading-pct">0%</div>
+</div>
+
+<!-- INDICADOR SYNC SEGUNDO PLANO -->
+<div id="bg-sync">⟳ Atualizando...</div>
 
 <!-- ORÇAMENTO TELA CHEIA -->
 <div id="orc-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:#080808;overflow-y:auto;-webkit-overflow-scrolling:touch;">
@@ -2028,24 +2105,89 @@ async function apiCall(action, body={}) {
   }
 }
 
+// ===== LOADING OVERLAY =====
+function setLoadingStep(text, pct) {
+  const step = document.getElementById('loading-step');
+  const bar  = document.getElementById('loading-bar');
+  const pctEl= document.getElementById('loading-pct');
+  if (step)  step.textContent  = text;
+  if (bar)   bar.style.width   = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function hideLoading() {
+  const el = document.getElementById('box-loading');
+  if (!el) return;
+  el.classList.add('fade-out');
+  setTimeout(() => el.classList.add('hidden'), 550);
+}
+
+function showBgSync() {
+  const el = document.getElementById('bg-sync');
+  if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+}
+
+// Verifica se tem cache local — abre app imediato e sincroniza em segundo plano
+function temCacheLocal() {
+  try {
+    const clientes = JSON.parse(localStorage.getItem('box00_clientes_v1') || '[]');
+    return clientes.length > 0;
+  } catch(e) { return false; }
+}
+
 async function checkAPI() {
-  const r = await apiCall('ping');
-  _apiOnline = r.ok === true;
+  const temCache = temCacheLocal();
+
+  if (temCache) {
+    // Cache disponível — abre app imediato
+    setLoadingStep('Carregando dados locais...', 60);
+    await new Promise(r => setTimeout(r, 300));
+    setLoadingStep('Pronto!', 100);
+    await new Promise(r => setTimeout(r, 200));
+    hideLoading();
+
+    // Sincroniza em segundo plano silenciosamente
+    setTimeout(async () => {
+      showBgSync();
+      const r = await apiCall('ping');
+      _apiOnline = r.ok === true;
+      atualizarBadgeAPI();
+      if (_apiOnline) await sincronizarTudo(true);
+    }, 500);
+
+  } else {
+    // Sem cache — sincronização completa com loading
+    setLoadingStep('Conectando à nuvem...', 10);
+    const r = await apiCall('ping');
+    _apiOnline = r.ok === true;
+    atualizarBadgeAPI();
+
+    if (_apiOnline) {
+      await sincronizarTudo(false);
+    } else {
+      setLoadingStep('Modo offline', 100);
+      await new Promise(r => setTimeout(r, 500));
+      hideLoading();
+      mostrarToast('⚠️ Sem conexão — modo offline');
+    }
+  }
+}
+
+function atualizarBadgeAPI() {
   const badge = document.getElementById('api-badge');
-  if(badge) {
+  if (badge) {
     badge.textContent = _apiOnline ? '🟢 Nuvem OK' : '🔴 Offline';
     badge.style.color = _apiOnline ? 'var(--verde)' : '#ff6b6b';
   }
-  if(_apiOnline) await sincronizarTudo();
-  return _apiOnline;
 }
 
-async function sincronizarTudo() {
+async function sincronizarTudo(bgMode = false) {
+  if (!bgMode) setLoadingStep('Carregando configurações...', 25);
+
   // 1. Carrega preços
   const rPrecos = await apiCall('getConfig');
   if(rPrecos.ok && rPrecos.data) {
     const d = rPrecos.data;
-    // Restaura preços de cada serviço por tipo de veículo
     SERVICOS.forEach(s => {
       ['hatch','sedan','suv'].forEach(v => {
         const key = 'preco_' + s.id + '_' + v;
@@ -2054,22 +2196,20 @@ async function sincronizarTudo() {
         }
       });
     });
-    // Restaura campos de custo
     const campos = {
       'custo_gas':'p-gas','custo_cons':'p-cons','custo_manut':'p-manut',
       'custo_kmes':'p-kmes','custo_agua':'p-agua','custo_luz':'p-luz','custo_atend':'p-atend'
     };
     Object.entries(campos).forEach(([key, elId]) => {
-      if(d[key]) {
-        const el = document.getElementById(elId);
-        if(el) el.value = d[key];
-      }
+      if(d[key]) { const el = document.getElementById(elId); if(el) el.value = d[key]; }
     });
     calcCustos();
     calcBoxCustos();
     renderServicos();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ precos, salvoEm: new Date().toLocaleString('pt-BR') }));
   }
+
+  if (!bgMode) setLoadingStep('Carregando clientes...', 50);
 
   // 2. Carrega clientes
   const rClientes = await apiCall('getClientes');
@@ -2084,14 +2224,24 @@ async function sincronizarTudo() {
     localStorage.setItem(CRM_KEY, JSON.stringify(clientesComAt));
     renderClientes();
   }
-  // 3. Sincroniza agendamentos — descarta localStorage e usa Sheets como fonte de verdade
+
+  if (!bgMode) setLoadingStep('Sincronizando agenda...', 80);
+
+  // 3. Sincroniza agendamentos
   const rAgs = await apiCall('getAgendamentos');
   if (rAgs.ok && rAgs.data) {
     salvarAgendamentos(rAgs.data);
     renderAgenda();
   }
 
-  mostrarToast('✅ Tudo sincronizado!');
+  if (!bgMode) {
+    setLoadingStep('Tudo pronto! ✅', 100);
+    await new Promise(r => setTimeout(r, 400));
+    hideLoading();
+    mostrarToast('✅ Tudo sincronizado!');
+  } else {
+    mostrarToast('✅ Atualizado!');
+  }
 }
 
 // Carrega clientes da nuvem
