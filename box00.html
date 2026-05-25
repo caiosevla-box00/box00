@@ -582,6 +582,10 @@ input[type=range]::-webkit-slider-thumb {
     <span class="tab-icon">⚙️</span>
     <span class="tab-label">Config</span>
   </div>
+  <div class="tab" onclick="showTab('diluidor')">
+    <span class="tab-icon">🧪</span>
+    <span class="tab-label">Diluidor</span>
+  </div>
 </div>
 
 <!-- ===== ORÇAMENTO ===== -->
@@ -819,7 +823,92 @@ input[type=range]::-webkit-slider-thumb {
   </div>
 </div>
 
-<!-- ===== CLIENTES ===== -->
+<!-- ===== DILUIDOR ===== -->
+<div class="section" id="tab-diluidor">
+  <div class="sec-title">🧪 Diluidor</div>
+  <div class="sec-desc">Calculadora de diluição de produtos</div>
+
+  <!-- Produtos salvos -->
+  <div style="margin-bottom:16px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Produtos salvos</div>
+    <div id="diluidor-produtos" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+    <button onclick="abrirModalProdutoDil()" style="background:transparent;border:1px dashed var(--borda);color:var(--dim);border-radius:8px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;width:100%;">+ Salvar produto</button>
+  </div>
+
+  <!-- Calculadora -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="card-title">⚗️ Calcular Diluição</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="field" style="margin:0;">
+        <label>Parte do produto</label>
+        <input type="number" id="dil-parte-prod" value="1" min="1" oninput="calcDiluicao()"
+          style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:10px;color:var(--verde);font-family:'Bebas Neue',sans-serif;font-size:28px;outline:none;text-align:center;">
+      </div>
+      <div class="field" style="margin:0;">
+        <label>Parte de água</label>
+        <input type="number" id="dil-parte-agua" value="100" min="1" oninput="calcDiluicao()"
+          style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:10px;color:#74b9ff;font-family:'Bebas Neue',sans-serif;font-size:28px;outline:none;text-align:center;">
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label>Volume final desejado (ml)</label>
+      <input type="number" id="dil-volume" value="500" min="1" oninput="calcDiluicao()"
+        style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:12px;color:#f0f0f0;font-family:'Bebas Neue',sans-serif;font-size:32px;outline:none;text-align:center;">
+    </div>
+
+    <!-- Atalhos de volume -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button onclick="setVolDil(250)"  style="flex:1;background:#111;border:1px solid var(--borda);color:var(--dim);border-radius:6px;padding:7px 2px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">250ml</button>
+      <button onclick="setVolDil(500)"  style="flex:1;background:#111;border:1px solid var(--borda);color:var(--dim);border-radius:6px;padding:7px 2px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">500ml</button>
+      <button onclick="setVolDil(750)"  style="flex:1;background:#111;border:1px solid var(--borda);color:var(--dim);border-radius:6px;padding:7px 2px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">750ml</button>
+      <button onclick="setVolDil(1000)" style="flex:1;background:#111;border:1px solid var(--borda);color:var(--dim);border-radius:6px;padding:7px 2px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">1L</button>
+      <button onclick="setVolDil(2000)" style="flex:1;background:#111;border:1px solid var(--borda);color:var(--dim);border-radius:6px;padding:7px 2px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">2L</button>
+    </div>
+
+    <!-- Resultado -->
+    <div style="background:var(--verde-bg);border:1px solid rgba(170,255,0,.3);border-radius:12px;padding:16px;text-align:center;">
+      <div style="font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">RESULTADO</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:#111;border-radius:8px;padding:14px;">
+          <div id="dil-res-prod" style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--verde);line-height:1;">—</div>
+          <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">🧴 Produto</div>
+        </div>
+        <div style="background:#111;border-radius:8px;padding:14px;">
+          <div id="dil-res-agua" style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#74b9ff;line-height:1;">—</div>
+          <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px;">💧 Água</div>
+        </div>
+      </div>
+      <div id="dil-res-ratio" style="margin-top:10px;font-size:12px;color:var(--dim);letter-spacing:1px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUTO DILUIDOR -->
+<div id="modal-prod-dil" style="display:none;position:fixed;inset:0;z-index:10010;background:rgba(0,0,0,.85);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--escuro);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:500px;margin-top:auto;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--verde);margin-bottom:16px;">Salvar Produto</div>
+    <div class="field"><label>Nome do produto</label>
+      <input type="text" id="dil-prod-nome" placeholder="Ex: APC, Shampoo, Pretinho..."
+        style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:11px 14px;color:var(--texto);font-size:15px;outline:none;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div class="field" style="margin:0;"><label>Parte produto</label>
+        <input type="number" id="dil-prod-p" value="1" min="1"
+          style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:10px;color:var(--verde);font-family:'Bebas Neue',sans-serif;font-size:24px;outline:none;text-align:center;">
+      </div>
+      <div class="field" style="margin:0;"><label>Parte água</label>
+        <input type="number" id="dil-prod-a" value="100" min="1"
+          style="width:100%;background:#111;border:1px solid var(--borda);border-radius:8px;padding:10px;color:#74b9ff;font-family:'Bebas Neue',sans-serif;font-size:24px;outline:none;text-align:center;">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="fecharModalProdDil()" style="flex:1;background:transparent;border:1px solid #333;color:#777;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">Cancelar</button>
+      <button onclick="salvarProdutoDil()" style="flex:2;background:var(--verde);color:var(--preto);border:none;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">SALVAR</button>
+    </div>
+  </div>
+</div>
 <div class="section" id="tab-clientes">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px;">
     <div class="sec-title">Clientes</div>
@@ -1499,7 +1588,7 @@ function setCfgVeiculo(v) {
 
 // ===== TABS =====
 function showTab(tab) {
-  const tabs = ['orcamento','combos','agenda','clientes','financeiro','custos','config'];
+  const tabs = ['orcamento','combos','agenda','clientes','financeiro','custos','config','diluidor'];
   document.querySelectorAll('.tab').forEach((t,i) => {
     t.classList.toggle('active', tabs[i]===tab);
   });
@@ -1513,6 +1602,7 @@ function showTab(tab) {
   if(tab==='agenda')     renderAgenda();
   if(tab==='clientes')   renderClientes();
   if(tab==='financeiro') { sincFinanceiro(); }
+  if(tab==='diluidor')   { renderProdutosDil(); calcDiluicao(); }
   if(tab==='custos')     { calcCustos(); calcBoxCustos(); }
   if(tab==='config')     renderConfig();
 }
@@ -2105,7 +2195,102 @@ async function apiCall(action, body={}) {
   }
 }
 
-// ===== LOADING OVERLAY =====
+// ===== DILUIDOR =====
+const DIL_KEY = 'box00_diluidor_v1';
+
+function getProdutosDil() {
+  try { return JSON.parse(localStorage.getItem(DIL_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function salvarProdutosDil(lista) {
+  localStorage.setItem(DIL_KEY, JSON.stringify(lista));
+}
+
+function setVolDil(vol) {
+  document.getElementById('dil-volume').value = vol;
+  calcDiluicao();
+}
+
+function calcDiluicao() {
+  const parteProd = parseFloat(document.getElementById('dil-parte-prod')?.value) || 1;
+  const parteAgua = parseFloat(document.getElementById('dil-parte-agua')?.value) || 100;
+  const volume    = parseFloat(document.getElementById('dil-volume')?.value)     || 500;
+
+  const total     = parteProd + parteAgua;
+  const mlProd    = (parteProd / total) * volume;
+  const mlAgua    = volume - mlProd;
+
+  const fmt = v => v >= 1000 ? (v/1000).toFixed(2).replace('.',',') + 'L' : v.toFixed(1).replace('.',',') + 'ml';
+
+  const elProd  = document.getElementById('dil-res-prod');
+  const elAgua  = document.getElementById('dil-res-agua');
+  const elRatio = document.getElementById('dil-res-ratio');
+
+  if (elProd)  elProd.textContent  = fmt(mlProd);
+  if (elAgua)  elAgua.textContent  = fmt(mlAgua);
+  if (elRatio) elRatio.textContent = `Proporção 1:${(parteAgua/parteProd).toFixed(0)} · Volume total: ${fmt(volume)}`;
+}
+
+function renderProdutosDil() {
+  const lista = getProdutosDil();
+  const el = document.getElementById('diluidor-produtos');
+  if (!el) return;
+  if (!lista.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--dim);font-style:italic;">Nenhum produto salvo ainda</div>';
+    return;
+  }
+  el.innerHTML = lista.map((p, i) => `
+    <div style="position:relative;">
+      <button onclick="usarProdutoDil(${i})"
+        style="background:var(--card);border:1px solid var(--borda);border-radius:8px;padding:8px 12px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;color:var(--texto);cursor:pointer;text-transform:uppercase;">
+        ${p.nome} <span style="color:var(--verde);">1:${p.parteAgua}</span>
+      </button>
+      <button onclick="removerProdutoDil(${i})"
+        style="position:absolute;top:-6px;right:-6px;background:#333;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;color:#aaa;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>`).join('');
+}
+
+function usarProdutoDil(idx) {
+  const p = getProdutosDil()[idx];
+  if (!p) return;
+  document.getElementById('dil-parte-prod').value = p.parteProd;
+  document.getElementById('dil-parte-agua').value = p.parteAgua;
+  calcDiluicao();
+  mostrarToast('✅ ' + p.nome + ' selecionado!');
+}
+
+function removerProdutoDil(idx) {
+  const lista = getProdutosDil();
+  lista.splice(idx, 1);
+  salvarProdutosDil(lista);
+  renderProdutosDil();
+}
+
+function abrirModalProdutoDil() {
+  document.getElementById('dil-prod-nome').value = '';
+  document.getElementById('dil-prod-p').value = document.getElementById('dil-parte-prod')?.value || 1;
+  document.getElementById('dil-prod-a').value = document.getElementById('dil-parte-agua')?.value || 100;
+  document.getElementById('modal-prod-dil').style.display = 'flex';
+}
+
+function fecharModalProdDil() {
+  document.getElementById('modal-prod-dil').style.display = 'none';
+}
+
+function salvarProdutoDil() {
+  const nome     = document.getElementById('dil-prod-nome').value.trim();
+  const parteProd = parseFloat(document.getElementById('dil-prod-p').value) || 1;
+  const parteAgua = parseFloat(document.getElementById('dil-prod-a').value) || 100;
+  if (!nome) { mostrarToast('⚠️ Informe o nome do produto'); return; }
+  const lista = getProdutosDil();
+  lista.push({ nome, parteProd, parteAgua });
+  salvarProdutosDil(lista);
+  fecharModalProdDil();
+  renderProdutosDil();
+  mostrarToast('✅ Produto salvo!');
+}
+
+
 function setLoadingStep(text, pct) {
   const step = document.getElementById('loading-step');
   const bar  = document.getElementById('loading-bar');
@@ -2246,10 +2431,15 @@ async function sincronizarTudo(bgMode = false) {
 
 // Carrega clientes da nuvem
 async function carregarClientesNuvem() {
-  mostrarToast('☁️ Sincronizando tudo...');
+  const badge = document.getElementById('api-badge');
+  if (badge) { badge.textContent = '⏳ Sincronizando...'; badge.style.color = '#f0a500'; }
   const ping = await apiCall('ping');
-  if(!ping.ok) { mostrarToast('⚠️ Sem conexão — modo offline'); return; }
-  await sincronizarTudo();
+  if(!ping.ok) {
+    mostrarToast('⚠️ Sem conexão — modo offline');
+    if (badge) { badge.textContent = '🔴 Offline'; badge.style.color = '#ff6b6b'; }
+    return;
+  }
+  await sincronizarTudo(false);
 }
 
 // ===== CRM — CLIENTES =====
@@ -2310,10 +2500,26 @@ function renderClientes() {
 
   document.getElementById('clientes-lista').innerHTML = filtrada.map(c => {
     const ats = c.atendimentos||[];
-    const totalCliente = ats.reduce((a,at)=>a+(at.valor||0),0);
+    const totalCliente = ats.reduce((a,at)=>a+(parseFloat(at.valor)||0),0);
     const ultimo = ats.length ? ats[ats.length-1] : null;
+
+    // Verifica se cliente está há 30+ dias sem atendimento
+    let diasSemRetorno = null;
+    let precisaRetorno = false;
+    if (ultimo?.data) {
+      const dtUltimo = dataStrParaDate(formatarDataBR(ultimo.data));
+      if (dtUltimo) {
+        diasSemRetorno = Math.floor((new Date() - dtUltimo) / (1000*60*60*24));
+        precisaRetorno = diasSemRetorno >= 30;
+      }
+    }
+
+    const badgeRetorno = precisaRetorno
+      ? `<div style="display:inline-block;background:rgba(240,165,0,.15);border:1px solid #f0a500;border-radius:20px;padding:2px 8px;font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;color:#f0a500;margin-top:4px;">🔔 ${diasSemRetorno}d sem retorno</div>`
+      : '';
+
     return `
-    <div style="background:var(--card);border:1px solid var(--borda);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="abrirPerfil('${c.id}')">
+    <div style="background:var(--card);border:1px solid ${precisaRetorno ? '#f0a50044' : 'var(--borda)'};border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;" onclick="abrirPerfil('${c.id}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
         <div style="flex:1;">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">${c.nome}</div>
@@ -2322,9 +2528,10 @@ function renderClientes() {
             ${c.ig ? '📸 ' + c.ig + '<br>' : ''}
             ${TIPOS_V[c.tipoVeiculo]||''} ${c.marca||''} ${c.modelo||''} ${c.ano||''}
           </div>
+          ${badgeRetorno}
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--verde);line-height:1;">R$${totalCliente}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--verde);line-height:1;">R$${totalCliente.toFixed(0)}</div>
           <div style="font-size:10px;color:var(--dim);">${ats.length} atend.</div>
           ${c.origem ? `<div style="margin-top:4px;font-size:10px;background:var(--verde-bg);border:1px solid var(--verde-dim);border-radius:20px;padding:2px 7px;color:var(--verde);">${ORIGENS[c.origem]||c.origem}</div>` : ''}
         </div>
@@ -2426,7 +2633,16 @@ function abrirPerfil(id) {
   const c = getClientes().find(x=>x.id===id);
   if(!c) return;
   const ats = c.atendimentos||[];
-  const total = ats.reduce((a,at)=>a+(at.valor||0),0);
+  const total = ats.reduce((a,at)=>a+(parseFloat(at.valor)||0),0);
+  const ultimo = ats.length ? ats[ats.length-1] : null;
+
+  // Calcula dias sem retorno
+  let diasSemRetorno = null;
+  if (ultimo?.data) {
+    const dtUltimo = dataStrParaDate(formatarDataBR(ultimo.data));
+    if (dtUltimo) diasSemRetorno = Math.floor((new Date() - dtUltimo) / (1000*60*60*24));
+  }
+  const precisaRetorno = diasSemRetorno !== null && diasSemRetorno >= 30;
 
   let atsHtml = ats.length ? [...ats].reverse().map((at, i) => `
     <div style="background:#111;border:1px solid var(--borda);border-radius:10px;padding:12px;margin-bottom:8px;">
@@ -2445,6 +2661,11 @@ function abrirPerfil(id) {
     </div>`).join('') :
     '<div style="text-align:center;color:var(--dim);font-size:13px;padding:20px 0;">Nenhum atendimento registrado</div>';
 
+  const btnRetorno = precisaRetorno && c.tel ? `
+    <button onclick="chamarDeVolta('${c.id}')" style="width:100%;background:rgba(240,165,0,.15);border:1px solid #f0a500;color:#f0a500;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;">
+      🔔 Chamar de volta — ${diasSemRetorno} dias sem visita
+    </button>` : '';
+
   document.getElementById('perfil-conteudo').innerHTML = `
     <div style="background:var(--card);border:2px solid var(--verde);border-radius:14px;padding:18px;margin-bottom:16px;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;">${c.nome}</div>
@@ -2460,15 +2681,22 @@ function abrirPerfil(id) {
           <div style="font-size:10px;color:var(--dim);text-transform:uppercase;">Atendimentos</div>
         </div>
         <div style="flex:1;background:#111;border-radius:8px;padding:10px;text-align:center;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--verde);line-height:1;">R$${total}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--verde);line-height:1;">R$${total.toFixed(0)}</div>
           <div style="font-size:10px;color:var(--dim);text-transform:uppercase;">Total gasto</div>
         </div>
+        ${diasSemRetorno !== null ? `
+        <div style="flex:1;background:#111;border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${precisaRetorno?'#f0a500':'var(--verde)'};line-height:1;">${diasSemRetorno}d</div>
+          <div style="font-size:10px;color:var(--dim);text-transform:uppercase;">Último visit.</div>
+        </div>` : ''}
       </div>
     </div>
 
+    ${btnRetorno}
+
     <div style="display:flex;gap:8px;margin-bottom:16px;">
       <button onclick="abrirModalCliente('${c.id}');fecharModalPerfil();" style="flex:1;background:transparent;border:1px solid var(--verde);color:var(--verde);border-radius:8px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">✏️ Editar</button>
-      <button onclick="abrirRegistroAtendimento('${c.id}')" style="flex:2;background:var(--verde);color:var(--preto);border:none;border-radius:8px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">+ Registrar Atendimento</button>
+      <button onclick="abrirRegistroAtendimento('${c.id}')" style="flex:2;background:var(--verde);color:var(--preto);border:none;border-radius:8px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">+ Registrar</button>
     </div>
 
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:10px;">Histórico</div>
@@ -2476,6 +2704,27 @@ function abrirPerfil(id) {
 
   document.getElementById('modal-perfil').style.display = 'block';
   document.getElementById('modal-perfil').scrollTop = 0;
+}
+
+function chamarDeVolta(clienteId) {
+  const c = getClientes().find(x => x.id === clienteId);
+  if (!c || !c.tel) return;
+  const ats = c.atendimentos || [];
+  const ultimo = ats.length ? ats[ats.length-1] : null;
+  const primeiroNomeCliente = primeiroNome(c.nome);
+  const veiculo = [c.marca, c.modelo, c.cor].filter(Boolean).join(' ');
+  const ultimoServico = ultimo?.servicos || '';
+
+  const msg = `Oi ${primeiroNomeCliente}! 🚗✨\n\n`
+    + `Faz um tempinho que não vejo você por aqui...\n\n`
+    + (veiculo ? `Seu ${veiculo} está precisando de um cuidado especial? 😄\n\n` : `Seu carro está precisando de um cuidado especial? 😄\n\n`)
+    + `Tenho agenda disponível essa semana!\n`
+    + `Me chama aqui 👇\n\n`
+    + `BOX 0.0 — Estética Automotiva 🏁`;
+
+  const tel = c.tel.replace(/\D/g,'');
+  const url = `https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
 }
 
 function excluirAtendimento(clienteId, atendId) {
@@ -3156,22 +3405,52 @@ function gerarTodosSlots() {
 }
 
 // ---- RENDER AGENDA ----
+function getDiasSemana(offset) {
+  const hoje = new Date();
+  // Encontra a segunda-feira da semana atual
+  const diaSemana = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1;
+  const seg = new Date(hoje);
+  seg.setDate(hoje.getDate() - diaSemana + offset * 7);
+  seg.setHours(0,0,0,0);
+  const dias = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(seg);
+    d.setDate(seg.getDate() + i);
+    dias.push(d);
+  }
+  return dias;
+}
+
+const NOMES_DIA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
 function renderAgenda() {
-  const [sab, dom] = getSabadoDomingo(_semanaOffset);
+  const dias = getDiasSemana(_semanaOffset);
+  const primeiroDia = dias[0];
+  const ultimoDia   = dias[6];
   document.getElementById('semana-label').textContent =
-    `Sáb ${formatarData(sab)} · Dom ${formatarData(dom)}`;
+    primeiroDia.getDate() + '/' + (primeiroDia.getMonth()+1).toString().padStart(2,'0') +
+    ' — ' +
+    ultimoDia.getDate() + '/' + (ultimoDia.getMonth()+1).toString().padStart(2,'0');
 
   let html = '';
-  [sab, dom].forEach(dia => {
+  dias.forEach(dia => {
     const iso = dataISO(dia);
-    const ags = getAgendamentos().filter(a => a.data === iso);
+    const ags = getAgendamentos().filter(a => {
+      // Compara tanto ISO quanto dd/mm/yyyy
+      const agData = String(a.data||'').trim();
+      return agData === iso || agData === formatarDataBR(iso);
+    });
     const ocupados = getSlotsOcupados(iso);
-    const slots = gerarTodosSlots();
-    const nomesDia = dia.getDay() === 6 ? 'Sábado' : 'Domingo';
+    const slots    = gerarTodosSlots();
+    const nomeDia  = NOMES_DIA[dia.getDay()];
+    const isHoje   = dataISO(new Date()) === iso;
+    const corDia   = isHoje ? 'var(--verde)' : 'var(--texto)';
 
-    html += `<div style="background:var(--card);border:1px solid var(--borda);border-radius:12px;margin-bottom:12px;overflow:hidden;">
+    html += `<div style="background:var(--card);border:1px solid ${isHoje ? 'var(--verde)' : 'var(--borda)'};border-radius:12px;margin-bottom:12px;overflow:hidden;">
       <div style="background:#111;padding:12px 14px;border-bottom:1px solid var(--borda);display:flex;justify-content:space-between;align-items:center;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;">${nomesDia} <span style="color:var(--verde);">${dia.getDate()}/${(dia.getMonth()+1).toString().padStart(2,'0')}</span></div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:${corDia};">${nomeDia} <span style="color:var(--verde);">${dia.getDate()}/${(dia.getMonth()+1).toString().padStart(2,'0')}</span>${isHoje ? ' <span style="font-size:10px;background:var(--verde);color:#000;border-radius:4px;padding:1px 5px;vertical-align:middle;">HOJE</span>' : ''}</div>
+        </div>
         <div style="font-size:11px;color:var(--dim);">${ags.length} agendamento${ags.length!==1?'s':''}</div>
       </div>`;
 
